@@ -1,3 +1,6 @@
+// import { unfluff } from "unfluff";
+import extractor from "unfluff";
+
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
@@ -6,26 +9,29 @@ import { load } from "cheerio";
 const searchTool = new TavilySearchResults({ maxResults: 5 });
 
 const getAppInfoTool = tool(
-  async (input: { appStoreUrl: string }): Promise<string> => {
-    const response = await fetch(input.appStoreUrl);
+  async (input: { url: string }): Promise<string> => {
+    const response = await fetch(input.url);
     const html = await response.text();
+    console.log(html);
     const $ = load(html);
     const metaDataJson = $(`[name=schema:software-application]`).html();
 
-    if (!metaDataJson) {
-      return "Could not find app metadata json.";
+    if (metaDataJson) {
+      const info = JSON.parse(metaDataJson.toString()) as {
+        name: string;
+        description: string;
+      };
+      return `App Name: ${info.name}\nApp Description: ${info.description}`;
+    } else {
+      const unfluffData = await extractor(html);
+      return `App Name: ${unfluffData.title}\nApp Description: ${unfluffData.description}`;
     }
-    const info = JSON.parse(metaDataJson.toString()) as {
-      name: string;
-      description: string;
-    };
-    return `App Name: ${info.name}\nApp Description: ${info.description}`;
   },
   {
     name: "getAppInfo",
-    description: "Get app info from the App Store",
+    description: "Get app info from a webpage url or appstore url",
     schema: z.object({
-      appStoreUrl: z.string(),
+      url: z.string(),
     }),
   }
 );
