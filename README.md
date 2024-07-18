@@ -20,5 +20,5 @@ TAVILY_API_KEY=
 ## Execute
 
 ```
-bun src/toolCallingAgent.ts APP_STORE_URL_OF_YOUR_APP
+bun src/toolCallingAgent.ts URL_OF_YOUR_APP_OR_WEBSITE
 ```
